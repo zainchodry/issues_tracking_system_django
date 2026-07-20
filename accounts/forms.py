@@ -48,5 +48,11 @@ class ResetPasswordForm(SetPasswordForm):
     new_password2 = forms.CharField(label='confirm-new-password', widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
 class LoginForm(AuthenticationForm):
-    email = forms.EmailField(label='email', widget=forms.EmailInput(attrs={'class': 'form-control'}))
-    password = forms.CharField(label='password', widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    username = forms.EmailField(
+        label='Email',
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'your@email.com', 'autofocus': True})
+    )
+    password = forms.CharField(
+        label='Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': '••••••••'})
+    )

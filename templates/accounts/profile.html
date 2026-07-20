@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Profile — IssueTracker Pro{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1 class="page-heading">My Profile</h1>
+  <a href="{% url 'change_password' %}" class="btn btn-outline"><i class="bi bi-lock"></i> Change Password</a>
+</div>
+<div class="card-grid-2">
+  <div class="card">
+    <div class="card-header"><h3>Profile Information</h3></div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+          <label class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>Account Info</h3></div>
+    <div class="card-body">
+      <div class="info-row"><span class="info-label">Email</span><span class="info-value">{{ request.user.email }}</span></div>
+      <div class="info-row"><span class="info-label">Username</span><span class="info-value">{{ request.user.username }}</span></div>
+      <div class="info-row"><span class="info-label">Role</span><span class="info-value"><span class="badge badge-{{ request.user.role|lower }}">{{ request.user.role }}</span></span></div>
+      <div class="info-row"><span class="info-label">Joined</span><span class="info-value">{{ request.user.date_joined|date:"M d, Y" }}</span></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

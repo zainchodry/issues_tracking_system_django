@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — IssueTracker Pro{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="dashboard-welcome">
+  <div>
+    <h2 class="welcome-heading">Good day, {{ request.user.username }}! 👋</h2>
+    <p class="welcome-sub">Here's what's happening across your projects.</p>
+  </div>
+  <div class="dashboard-actions">
+    {% if request.user.role != 'DEVELOPER' %}<a href="{% url 'projects:create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Project</a>{% endif %}
+    <a href="{% url 'issues:create' %}" class="btn btn-outline"><i class="bi bi-plus-lg"></i> New Issue</a>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+  <div class="stat-card stat-blue">
+    <div class="stat-icon"><i class="bi bi-kanban-fill"></i></div>
+    <div class="stat-info">
+      <div class="stat-value">{{ total_projects }}</div>
+      <div class="stat-label">Total Projects</div>
+    </div>
+    <div class="stat-sub">{{ active_projects }} active</div>
+  </div>
+  <div class="stat-card stat-purple">
+    <div class="stat-icon"><i class="bi bi-exclamation-circle-fill"></i></div>
+    <div class="stat-info">
+      <div class="stat-value">{{ total_issues }}</div>
+      <div class="stat-label">Total Issues</div>
+    </div>
+    <div class="stat-sub">{{ open_issues }} open</div>
+  </div>
+  <div class="stat-card stat-amber">
+    <div class="stat-icon"><i class="bi bi-arrow-repeat"></i></div>
+    <div class="stat-info">
+      <div class="stat-value">{{ in_progress }}</div>
+      <div class="stat-label">In Progress</div>
+    </div>
+    <div class="stat-sub">{{ overdue_count }} overdue</div>
+  </div>
+  <div class="stat-card stat-green">
+    <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+    <div class="stat-info">
+      <div class="stat-value">{{ completed_issues }}</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-sub">issues closed</div>
+  </div>
+</div>
+
+<!-- Recent Content -->
+<div class="dashboard-grid">
+  <!-- Recent Issues -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="bi bi-clock-history"></i> Recent Issues</h3>
+      <a href="{% url 'issues:list' %}" class="card-link">View all</a>
+    </div>
+    <div class="card-body p-0">
+      {% if recent_issues %}
+      <table class="data-table">
+        <thead><tr><th>Issue</th><th>Project</th><th>Priority</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for issue in recent_issues %}
+          <tr>
+            <td><a href="{% url 'issues:detail' issue.pk %}" class="link-primary">{{ issue.title|truncatechars:40 }}</a></td>
+            <td><span class="text-muted">{{ issue.project.name }}</span></td>
+            <td><span class="badge badge-priority-{{ issue.priority|lower }}">{{ issue.priority }}</span></td>
+            <td><span class="badge badge-status-{{ issue.status|lower }}">{{ issue.get_status_display }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<div class="empty-state"><i class="bi bi-inbox"></i><p>No issues yet</p></div>{% endif %}
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="dashboard-right">
+    <!-- Recent Projects -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="bi bi-kanban"></i> Recent Projects</h3>
+        <a href="{% url 'projects:list' %}" class="card-link">View all</a>
+      </div>
+      <div class="card-body p-0">
+        {% if recent_projects %}
+        {% for project in recent_projects %}
+        <a href="{{ project.get_absolute_url }}" class="project-item">
+          <div class="project-icon">{{ project.name|first|upper }}</div>
+          <div class="project-info">
+            <div class="project-name">{{ project.name|truncatechars:25 }}</div>
+            <div class="project-meta">{{ project.total_issues }} issues · {{ project.get_status_display }}</div>
+          </div>
+          <div class="project-progress-bar"><div class="progress-fill" style="width:{{ project.progress }}%"></div></div>
+        </a>
+        {% endfor %}
+        {% else %}<div class="empty-state"><i class="bi bi-folder2-open"></i><p>No projects yet</p></div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="bi bi-bell"></i> Notifications</h3>
+        <a href="{% url 'notifications:list' %}" class="card-link">View all</a>
+      </div>
+      <div class="card-body p-0">
+        {% if unread_notifications %}
+        {% for notif in unread_notifications %}
+        <a href="{% url 'notifications:detail' notif.pk %}" class="notif-item{% if not notif.is_read %} unread{% endif %}">
+          <div class="notif-dot-indicator"></div>
+          <div class="notif-content">
+            <div class="notif-title">{{ notif.title }}</div>
+            <div class="notif-time">{{ notif.created_at|timesince }} ago</div>
+          </div>
+        </a>
+        {% endfor %}
+        {% else %}<div class="empty-state"><i class="bi bi-bell-slash"></i><p>All caught up!</p></div>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

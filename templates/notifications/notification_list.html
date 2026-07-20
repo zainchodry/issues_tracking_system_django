@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1 class="page-heading">Notifications</h1>
+  <div class="btn-group">
+    <form method="post" action="{% url 'notifications:read-all' %}">{% csrf_token %}<button class="btn btn-outline"><i class="bi bi-check2-all"></i> Mark All Read</button></form>
+    <a href="{% url 'notifications:preferences' %}" class="btn btn-outline"><i class="bi bi-gear"></i> Preferences</a>
+  </div>
+</div>
+<div class="card">
+  <div class="card-body p-0">
+    {% if notifications %}
+    {% for notif in notifications %}
+    <div class="notif-list-item {% if not notif.is_read %}unread{% endif %}">
+      <div class="notif-type-icon notif-{{ notif.notification_type|lower }}">
+        <i class="bi {% if notif.notification_type == 'ISSUE' %}bi-exclamation-circle{% elif notif.notification_type == 'PROJECT' %}bi-kanban{% elif notif.notification_type == 'COMMENT' %}bi-chat-dots{% else %}bi-bell{% endif %}"></i>
+      </div>
+      <div class="notif-body">
+        <a href="{% url 'notifications:detail' notif.pk %}" class="notif-title">{{ notif.title }}</a>
+        <p class="notif-message">{{ notif.message|truncatechars:100 }}</p>
+        <div class="notif-meta">{{ notif.created_at|timesince }} ago</div>
+      </div>
+      <div class="notif-actions">
+        {% if not notif.is_read %}
+        <form method="post" action="{% url 'notifications:read' notif.pk %}">{% csrf_token %}<button class="btn btn-xs btn-outline" title="Mark read"><i class="bi bi-check"></i></button></form>
+        {% else %}
+        <form method="post" action="{% url 'notifications:unread' notif.pk %}">{% csrf_token %}<button class="btn btn-xs btn-outline" title="Mark unread"><i class="bi bi-dot"></i></button></form>
+        {% endif %}
+        <a href="{% url 'notifications:delete' notif.pk %}" class="btn btn-xs btn-danger" title="Delete"><i class="bi bi-x"></i></a>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}<div class="empty-state-full"><i class="bi bi-bell-slash"></i><p>No notifications yet.</p></div>{% endif %}
+  </div>
+</div>
+{% if notifications.has_other_pages %}
+<div class="pagination">
+  {% if notifications.has_previous %}<a href="?page={{ notifications.previous_page_number }}" class="page-btn"><i class="bi bi-chevron-left"></i></a>{% endif %}
+  <span class="page-info">Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}</span>
+  {% if notifications.has_next %}<a href="?page={{ notifications.next_page_number }}" class="page-btn"><i class="bi bi-chevron-right"></i></a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

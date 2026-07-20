@@ -25,6 +25,7 @@ from projects.models import (
     Project,
 )
 
+
 class IssueListView(
     LoginRequiredMixin,
     View,
@@ -45,121 +46,55 @@ class IssueListView(
             .order_by("-created_at")
         )
 
-        search = request.GET.get(
-            "search"
-        )
-
-        status = request.GET.get(
-            "status"
-        )
-
-        priority = request.GET.get(
-            "priority"
-        )
-
-        project = request.GET.get(
-            "project"
-        )
+        search = request.GET.get("search")
+        status = request.GET.get("status")
+        priority = request.GET.get("priority")
+        project = request.GET.get("project")
 
         if request.user.role == "DEVELOPER":
-
-            issues = issues.filter(
-                assignee=request.user
-            )
-
+            issues = issues.filter(assignee=request.user)
         elif request.user.role == "MANAGER":
-
             issues = issues.filter(
-
-                Q(
-                    reporter=request.user
-                )
-
-                |
-
-                Q(
-                    assignee=request.user
-                )
-
-                |
-
-                Q(
-                    project__owner=request.user
-                )
-
+                Q(reporter=request.user)
+                | Q(assignee=request.user)
+                | Q(project__owner=request.user)
             ).distinct()
 
         if search:
-
             issues = issues.filter(
-
-                Q(
-                    title__icontains=search
-                )
-
-                |
-
-                Q(
-                    description__icontains=search
-                )
-
+                Q(title__icontains=search)
+                | Q(description__icontains=search)
             )
 
         if status:
-
-            issues = issues.filter(
-                status=status
-            )
+            issues = issues.filter(status=status)
 
         if priority:
-
-            issues = issues.filter(
-                priority=priority
-            )
+            issues = issues.filter(priority=priority)
 
         if project:
+            issues = issues.filter(project_id=project)
 
-            issues = issues.filter(
-                project_id=project
-            )
+        paginator = Paginator(issues, 10)
+        page = request.GET.get("page")
+        page_obj = paginator.get_page(page)
 
-        paginator = Paginator(
-            issues,
-            10,
-        )
-
-        page = request.GET.get(
-            "page"
-        )
-
-        page_obj = paginator.get_page(
-            page
-        )
+        projects_list = Project.objects.all()
 
         context = {
-
             "issues": page_obj,
-
             "search": search,
-
             "status": status,
-
             "priority": priority,
-
             "project": project,
-
+            "projects_list": projects_list,
+            "status_choices": Issue.Status.choices,
+            "priority_choices": Issue.Priority.choices,
         }
 
-        return render(
+        return render(request, "issues/issue_list.html", context)
 
-            request,
 
-            "issues/issue_list.html",
-
-            context,
-
-        )
-    
 class IssueDetailView(
     LoginRequiredMixin,
     View,
@@ -170,51 +105,32 @@ class IssueDetailView(
         request,
         pk,
     ):
+        from comments.models import Comment
+        from comments.forms import CommentForm
 
         issue = get_object_or_404(
-
             Issue.objects
-            .select_related(
-                "project",
-                "reporter",
-                "assignee",
-            )
-            .prefetch_related(
-                "attachments",
-                "history",
-            ),
-
+            .select_related("project", "reporter", "assignee")
+            .prefetch_related("attachments", "history", "comments"),
             pk=pk,
-
         )
 
-        attachments = (
-            issue.attachments.all()
+        attachments = issue.attachments.all()
+        history = issue.history.all()
+        comments = issue.comments.filter(parent=None).select_related('user').prefetch_related(
+            'replies__user', 'reactions'
         )
-
-        history = (
-            issue.history.all()
-        )
+        comment_form = CommentForm()
 
         context = {
-
             "issue": issue,
-
             "attachments": attachments,
-
             "history": history,
-
+            "comments": comments,
+            "comment_form": comment_form,
         }
 
-        return render(
-
-            request,
-
-            "issues/issue_detail.html",
-
-            context,
-
-        )
+        return render(request, "issues/issue_detail.html", context)
 
 class IssueCreateView(
     LoginRequiredMixin,

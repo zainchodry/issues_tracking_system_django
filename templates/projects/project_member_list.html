@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Members — {{ project.name }}{% endblock %}
+{% block page_title %}Project Members{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'projects:list' %}">Projects</a> / <a href="{{ project.get_absolute_url }}">{{ project.name }}</a> / Members</div>
+    <h1 class="page-heading">Team Members</h1>
+  </div>
+  <a href="{% url 'projects:member-add' project.slug %}" class="btn btn-primary"><i class="bi bi-person-plus-fill"></i> Add Member</a>
+</div>
+<div class="card">
+  <div class="card-body p-0">
+    {% if members %}
+    <table class="data-table">
+      <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for member in members %}
+        <tr>
+          <td><div class="user-cell"><div class="user-cell-avatar">{{ member.user.username|first|upper }}</div>{{ member.user.username }}</div></td>
+          <td class="text-muted">{{ member.user.email }}</td>
+          <td><span class="badge badge-role-{{ member.role|lower }}">{{ member.role }}</span></td>
+          <td class="text-muted">{{ member.joined_at|date:"M d, Y" }}</td>
+          <td><span class="badge {% if member.is_active %}badge-success{% else %}badge-danger{% endif %}">{% if member.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+          <td>
+            <a href="{% url 'projects:member-update' member.pk %}" class="btn btn-xs btn-outline"><i class="bi bi-pencil"></i></a>
+            <form method="post" action="{% url 'projects:member-delete' member.pk %}" style="display:inline">
+              {% csrf_token %}<button class="btn btn-xs btn-danger" onclick="return confirm('Remove this member?')"><i class="bi bi-person-dash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty-state"><i class="bi bi-people"></i><p>No members yet</p></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

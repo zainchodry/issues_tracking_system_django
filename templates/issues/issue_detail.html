@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% block title %}#{{ issue.pk }} {{ issue.title }}{% endblock %}
+{% block page_title %}Issue #{{ issue.pk }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'issues:list' %}">Issues</a> / #{{ issue.pk }}</div>
+    <h1 class="page-heading">{{ issue.title }}</h1>
+  </div>
+  <div class="btn-group">
+    <a href="{% url 'issues:update' issue.pk %}" class="btn btn-outline"><i class="bi bi-pencil"></i> Edit</a>
+    <a href="{% url 'issues:delete' issue.pk %}" class="btn btn-danger"><i class="bi bi-trash"></i></a>
+  </div>
+</div>
+<div class="detail-grid">
+  <div class="detail-main">
+    <div class="card">
+      <div class="card-header"><h3>Description</h3></div>
+      <div class="card-body"><p class="issue-description">{{ issue.description }}</p></div>
+    </div>
+    {% if attachments %}
+    <div class="card">
+      <div class="card-header"><h3><i class="bi bi-paperclip"></i> Attachments</h3></div>
+      <div class="card-body">
+        {% for att in attachments %}
+        <a href="{{ att.file.url }}" class="attachment-item" target="_blank">
+          <i class="bi bi-file-earmark"></i> {{ att.filename }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    <!-- Comments -->
+    <div class="card">
+      <div class="card-header"><h3><i class="bi bi-chat-dots"></i> Comments</h3></div>
+      <div class="card-body">
+        {% for comment in comments %}
+        {% if not comment.is_deleted %}
+        <div class="comment-item">
+          <div class="comment-avatar">{{ comment.user.username|first|upper }}</div>
+          <div class="comment-content">
+            <div class="comment-header">
+              <span class="comment-author">{{ comment.user.username }}</span>
+              <span class="comment-time">{{ comment.created_at|timesince }} ago{% if comment.is_edited %} (edited){% endif %}</span>
+            </div>
+            <p class="comment-text">{{ comment.message }}</p>
+            <div class="comment-actions">
+              <button class="btn-reply" onclick="toggleReply({{ comment.pk }})"><i class="bi bi-reply"></i> Reply</button>
+              {% if request.user == comment.user or request.user.role == 'ADMIN' %}
+              <a href="{% url 'comments:update' comment.pk %}" class="btn-edit"><i class="bi bi-pencil"></i> Edit</a>
+              <form method="post" action="{% url 'comments:delete' comment.pk %}" style="display:inline">{% csrf_token %}<button class="btn-del"><i class="bi bi-trash"></i></button></form>
+              {% endif %}
+            </div>
+            <div id="reply-form-{{ comment.pk }}" class="reply-form" style="display:none">
+              <form method="post" action="{% url 'comments:create' issue.pk %}">
+                {% csrf_token %}<input type="hidden" name="parent_id" value="{{ comment.pk }}">
+                <textarea name="message" class="form-control" rows="2" placeholder="Write a reply..."></textarea>
+                <button type="submit" class="btn btn-sm btn-primary mt-1">Reply</button>
+              </form>
+            </div>
+            {% if comment.replies.all %}
+            <div class="replies">
+              {% for reply in comment.replies.all %}
+              {% if not reply.is_deleted %}
+              <div class="comment-item reply-item">
+                <div class="comment-avatar sm">{{ reply.user.username|first|upper }}</div>
+                <div class="comment-content">
+                  <div class="comment-header"><span class="comment-author">{{ reply.user.username }}</span><span class="comment-time">{{ reply.created_at|timesince }} ago</span></div>
+                  <p class="comment-text">{{ reply.message }}</p>
+                </div>
+              </div>
+              {% endif %}
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+        {% empty %}
+        <div class="empty-state"><i class="bi bi-chat-square"></i><p>No comments yet. Be the first!</p></div>
+        {% endfor %}
+        <!-- Add Comment -->
+        <div class="comment-form-wrapper">
+          <div class="comment-avatar">{{ request.user.username|first|upper }}</div>
+          <form method="post" action="{% url 'comments:create' issue.pk %}" class="comment-form">
+            {% csrf_token %}
+            <textarea name="message" class="form-control" rows="3" placeholder="Write a comment..."></textarea>
+            <button type="submit" class="btn btn-primary mt-2">Post Comment</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <!-- History -->
+    {% if history %}
+    <div class="card">
+      <div class="card-header"><h3><i class="bi bi-clock-history"></i> Activity</h3></div>
+      <div class="card-body p-0">
+        {% for h in history %}
+        <div class="history-item">
+          <div class="history-icon"><i class="bi bi-circle-fill"></i></div>
+          <div class="history-content">
+            <span class="history-action">{{ h.get_action_display }}</span>
+            {% if h.description %}<span class="history-desc">— {{ h.description }}</span>{% endif %}
+            <div class="history-meta">by {{ h.performed_by.username }} · {{ h.created_at|timesince }} ago</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="detail-sidebar">
+    <div class="card">
+      <div class="card-header"><h3>Details</h3></div>
+      <div class="card-body">
+        <div class="info-row"><span class="info-label">Status</span><span class="info-value"><span class="badge badge-status-{{ issue.status|lower }}">{{ issue.get_status_display }}</span></span></div>
+        <div class="info-row"><span class="info-label">Priority</span><span class="info-value"><span class="badge badge-priority-{{ issue.priority|lower }}">{{ issue.priority }}</span></span></div>
+        <div class="info-row"><span class="info-label">Type</span><span class="info-value">{{ issue.get_issue_type_display }}</span></div>
+        <div class="info-row"><span class="info-label">Project</span><span class="info-value"><a href="{{ issue.project.get_absolute_url }}">{{ issue.project.name }}</a></span></div>
+        <div class="info-row"><span class="info-label">Reporter</span><span class="info-value">{{ issue.reporter.username }}</span></div>
+        <div class="info-row"><span class="info-label">Assignee</span><span class="info-value">{{ issue.assignee.username|default:"Unassigned" }}</span></div>
+        {% if issue.due_date %}<div class="info-row"><span class="info-label">Due Date</span><span class="info-value {% if issue.is_overdue %}text-danger{% endif %}">{{ issue.due_date }}{% if issue.is_overdue %} ⚠{% endif %}</span></div>{% endif %}
+        <div class="info-row"><span class="info-label">Est. Hours</span><span class="info-value">{{ issue.estimated_hours }}h</span></div>
+        <div class="info-row"><span class="info-label">Logged</span><span class="info-value">{{ issue.logged_hours }}h</span></div>
+        <div class="info-row"><span class="info-label">Created</span><span class="info-value">{{ issue.created_at|date:"M d, Y" }}</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Progress</h3></div>
+      <div class="card-body">
+        <div class="progress-large">
+          <div class="progress-bar"><div class="progress-fill" style="width:{{ issue.progress }}%"></div></div>
+          <div class="progress-pct">{{ issue.progress }}%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function toggleReply(id) {
+  const el = document.getElementById('reply-form-' + id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Edit Comment{% endblock %}
+{% block page_title %}Edit Comment{% endblock %}
+{% block content %}
+<div class="form-page-wrapper">
+  <div class="card">
+    <div class="card-header"><h3>Edit Comment</h3></div>
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+          <label class="form-label">{{ field.label }}</label>{{ field }}
+          {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+        <div class="form-actions">
+          <a href="{% url 'issues:detail' comment.issue.pk %}" class="btn btn-outline">Cancel</a>
+          <button type="submit" class="btn btn-primary">Update Comment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Register — IssueTracker Pro{% endblock %}
+{% block auth_content %}
+<div class="auth-card">
+  <div class="auth-logo"><i class="bi bi-bug-fill"></i></div>
+  <h1 class="auth-title">Create Account</h1>
+  <p class="auth-subtitle">Join IssueTracker Pro today</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="form-group">
+      <label class="form-label">{{ field.label }}</label>
+      {{ field }}
+      {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+    </div>
+    {% endfor %}
+    {% if form.non_field_errors %}
+    <div class="form-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+  </form>
+  <p class="auth-link">Already have an account? <a href="{% url 'login' %}">Sign In</a></p>
+</div>
+{% endblock %}

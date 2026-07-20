@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="form-page-wrapper wide">
+  <div class="card">
+    <div class="card-header"><h3>{{ title }}</h3></div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="form-grid-2">
+          {% for field in form %}
+          <div class="form-group {% if field.name == 'description' %}full-width{% endif %}">
+            <label class="form-label">{{ field.label }}{% if field.field.required %} <span class="required">*</span>{% endif %}</label>
+            {{ field }}
+            {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Attachments</label>
+          <input type="file" name="files" class="form-control" multiple>
+          <small class="form-hint">Max 10MB per file. Multiple files allowed.</small>
+        </div>
+        {% if form.non_field_errors %}<div class="form-error">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="form-actions">
+          <a href="{% url 'issues:list' %}" class="btn btn-outline">Cancel</a>
+          <button type="submit" class="btn btn-primary">{{ title }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

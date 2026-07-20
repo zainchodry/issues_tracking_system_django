@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}{{ notification.title }}{% endblock %}
+{% block page_title %}Notification{% endblock %}
+{% block content %}
+<div class="form-page-wrapper">
+  <div class="card">
+    <div class="card-header">
+      <h3>{{ notification.title }}</h3>
+      <span class="badge badge-type-{{ notification.notification_type|lower }}">{{ notification.notification_type }}</span>
+    </div>
+    <div class="card-body">
+      <p>{{ notification.message }}</p>
+      <div class="info-row"><span class="info-label">Received</span><span class="info-value">{{ notification.created_at|date:"M d, Y H:i" }}</span></div>
+      {% if notification.read_at %}<div class="info-row"><span class="info-label">Read</span><span class="info-value">{{ notification.read_at|date:"M d, Y H:i" }}</span></div>{% endif %}
+    </div>
+    <div class="card-footer">
+      <a href="{% url 'notifications:list' %}" class="btn btn-outline">← Back</a>
+      <form method="post" action="{% url 'notifications:delete' notification.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-danger">Delete</button></form>
+    </div>
+  </div>
+</div>
+{% endblock %}
